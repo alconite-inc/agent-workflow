@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "name": "agent-workflow-status",
+  "workflowVersion": "1.0.0",
+  "mode": "read_only",
+  "requiresActiveTask": "optional",
+  "allowedWrites": [],
+  "commandClasses": ["read_repository"],
+  "stopConditions": ["ambiguous_state"]
+}

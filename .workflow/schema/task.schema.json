@@ -1,0 +1,176 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:agent-workflow:schema:task:v1",
+  "title": "Agent Workflow task",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "taskId", "title", "kind", "stage", "specRevision", "buildPlanItemId", "worktreeId", "branch", "createdOn", "updatedOn", "events", "specReview", "checkpoint", "verification", "review", "recovery", "closure"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "taskId": { "$ref": "#/$defs/id" },
+    "title": { "type": "string", "minLength": 1, "maxLength": 160 },
+    "kind": { "enum": ["feature", "fix", "rollback"] },
+    "stage": { "$ref": "#/$defs/stage" },
+    "specRevision": { "type": "integer", "minimum": 1, "maximum": 1000 },
+    "buildPlanItemId": { "anyOf": [{ "type": "string", "pattern": "^[A-Z]{2,8}-BP-[0-9]{3,6}$" }, { "type": "null" }] },
+    "worktreeId": { "$ref": "#/$defs/id" },
+    "branch": { "type": "string", "minLength": 1, "maxLength": 120, "pattern": "^(feature|fix|rollback|chore|docs|test|refactor)/[a-z0-9]+(?:-[a-z0-9]+)*$" },
+    "createdOn": { "$ref": "#/$defs/date" },
+    "updatedOn": { "$ref": "#/$defs/date" },
+    "events": { "type": "array", "minItems": 1, "maxItems": 10000, "items": { "$ref": "#/$defs/event" } },
+    "specReview": { "$ref": "#/$defs/specReview" },
+    "checkpoint": { "$ref": "#/$defs/checkpoint" },
+    "verification": { "$ref": "#/$defs/verification" },
+    "review": { "$ref": "#/$defs/review" },
+    "recovery": { "anyOf": [{ "$ref": "#/$defs/recovery" }, { "type": "null" }] },
+    "closure": { "anyOf": [{ "$ref": "#/$defs/closure" }, { "type": "null" }] }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "stage": { "const": "archived" } }, "required": ["stage"] },
+      "then": { "properties": { "closure": { "$ref": "#/$defs/closure" } } },
+      "else": { "properties": { "closure": { "type": "null" } } }
+    },
+    {
+      "if": { "properties": { "stage": { "enum": ["discovery", "specification"] } }, "required": ["stage"] },
+      "then": { "properties": { "specReview": { "properties": { "status": { "const": "not_started" } }, "required": ["status"] } } }
+    },
+    {
+      "if": { "properties": { "stage": { "const": "awaiting_spec_review" } }, "required": ["stage"] },
+      "then": { "properties": { "specReview": { "properties": { "status": { "const": "pending" } }, "required": ["status"] } } }
+    },
+    {
+      "if": { "properties": { "stage": { "enum": ["approved", "implementation", "verification", "review", "ready_to_archive"] } }, "required": ["stage"] },
+      "then": { "properties": { "specReview": { "properties": { "status": { "const": "approved" } }, "required": ["status"] } } }
+    },
+    {
+      "if": { "properties": { "stage": { "enum": ["verification", "review", "ready_to_archive"] } }, "required": ["stage"] },
+      "then": { "properties": { "checkpoint": { "properties": { "status": { "const": "recorded" } }, "required": ["status"] } } }
+    },
+    {
+      "if": { "properties": { "stage": { "enum": ["review", "ready_to_archive"] } }, "required": ["stage"] },
+      "then": { "properties": { "verification": { "properties": { "status": { "const": "passed" } }, "required": ["status"] } } }
+    },
+    {
+      "if": { "properties": { "stage": { "const": "ready_to_archive" } }, "required": ["stage"] },
+      "then": { "properties": { "review": { "properties": { "status": { "const": "passed" } }, "required": ["status"] } } }
+    },
+    {
+      "if": { "properties": { "recovery": { "type": "object" } }, "required": ["recovery"] },
+      "then": {
+        "properties": {
+          "stage": { "enum": ["implementation", "verification", "review", "ready_to_archive"] },
+          "closure": { "type": "null" }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "closure": { "type": "object", "properties": { "outcome": { "const": "completed" } }, "required": ["outcome"] } }, "required": ["closure"] },
+      "then": {
+        "properties": {
+          "stage": { "const": "archived" },
+          "specReview": { "properties": { "status": { "const": "approved" } }, "required": ["status"] },
+          "checkpoint": { "properties": { "status": { "const": "recorded" } }, "required": ["status"] },
+          "verification": { "properties": { "status": { "const": "passed" } }, "required": ["status"] },
+          "review": { "properties": { "status": { "const": "passed" } }, "required": ["status"] },
+          "recovery": { "type": "null" }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$", "minLength": 3, "maxLength": 80 },
+    "date": { "type": "string", "format": "date", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+    "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "revision": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+    "nullableHash": { "anyOf": [{ "$ref": "#/$defs/hash" }, { "type": "null" }] },
+    "nullableRevision": { "anyOf": [{ "$ref": "#/$defs/revision" }, { "type": "null" }] },
+    "nullableDate": { "anyOf": [{ "$ref": "#/$defs/date" }, { "type": "null" }] },
+    "nullablePath": { "anyOf": [{ "type": "string", "minLength": 1, "maxLength": 240, "pattern": "^(?!/)(?![A-Za-z]:)(?!.*\\\\)(?!.*//)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*\\/$)[^\\u0000-\\u001f\\u007f]+$" }, { "type": "null" }] },
+    "activeStage": { "enum": ["discovery", "specification", "awaiting_spec_review", "approved", "implementation", "verification", "review", "ready_to_archive"] },
+    "stage": { "enum": ["discovery", "specification", "awaiting_spec_review", "approved", "implementation", "verification", "review", "ready_to_archive", "archived"] },
+    "actor": {
+      "type": "object", "additionalProperties": false,
+      "required": ["actorKind", "actorRole", "actorRef"],
+      "properties": {
+        "actorKind": { "enum": ["human", "agent", "system"] },
+        "actorRole": { "enum": ["requester", "archaeologist", "architect", "developer", "reviewer", "deployer", "validator"] },
+        "actorRef": { "type": "string", "minLength": 3, "maxLength": 120, "pattern": "^[A-Za-z0-9][A-Za-z0-9:._/-]*$" }
+      },
+      "allOf": [{ "if": { "properties": { "actorRole": { "const": "requester" } }, "required": ["actorRole"] }, "then": { "properties": { "actorKind": { "const": "human" } } } }]
+    },
+    "scopeRevision": {
+      "type": "object", "additionalProperties": false,
+      "required": ["previousSpecRevision", "newSpecRevision", "previousSpecSha256", "invalidatedCheckpointRevision", "invalidatedCheckpointBaseRevision", "invalidatedVerificationRevision", "invalidatedReviewRevision"],
+      "properties": {
+        "previousSpecRevision": { "type": "integer", "minimum": 1, "maximum": 999 },
+        "newSpecRevision": { "type": "integer", "minimum": 2, "maximum": 1000 },
+        "previousSpecSha256": { "$ref": "#/$defs/hash" },
+        "invalidatedCheckpointRevision": { "$ref": "#/$defs/nullableRevision" },
+        "invalidatedCheckpointBaseRevision": { "$ref": "#/$defs/nullableRevision" },
+        "invalidatedVerificationRevision": { "$ref": "#/$defs/nullableRevision" },
+        "invalidatedReviewRevision": { "$ref": "#/$defs/nullableRevision" }
+      }
+    },
+    "event": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sequence", "date", "eventType", "decisionBy", "recordedBy", "from", "to", "reason", "specSha256", "scopeRevision"],
+      "properties": {
+        "sequence": { "type": "integer", "minimum": 1, "maximum": 10000 },
+        "date": { "$ref": "#/$defs/date" },
+        "eventType": { "enum": ["task_started", "stage_advanced", "spec_pending", "spec_changes_requested", "spec_approved", "scope_revision_requested", "proof_invalidated", "repair_requested", "review_passed", "finding_regression", "completed", "cancelled", "superseded"] },
+        "decisionBy": { "$ref": "#/$defs/actor" },
+        "recordedBy": { "$ref": "#/$defs/actor" },
+        "from": { "anyOf": [{ "$ref": "#/$defs/stage" }, { "type": "null" }] },
+        "to": { "$ref": "#/$defs/stage" },
+        "reason": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "specSha256": { "$ref": "#/$defs/nullableHash" },
+        "scopeRevision": { "anyOf": [{ "$ref": "#/$defs/scopeRevision" }, { "type": "null" }] }
+      }
+    },
+    "specReview": {
+      "oneOf": [
+        { "type": "object", "additionalProperties": false, "required": ["status", "reviewedOn", "specSha256"], "properties": { "status": { "const": "not_started" }, "reviewedOn": { "type": "null" }, "specSha256": { "type": "null" } } },
+        { "type": "object", "additionalProperties": false, "required": ["status", "reviewedOn", "specSha256"], "properties": { "status": { "const": "pending" }, "reviewedOn": { "type": "null" }, "specSha256": { "$ref": "#/$defs/hash" } } },
+        { "type": "object", "additionalProperties": false, "required": ["status", "reviewedOn", "specSha256"], "properties": { "status": { "const": "approved" }, "reviewedOn": { "$ref": "#/$defs/date" }, "specSha256": { "$ref": "#/$defs/hash" } } }
+      ]
+    },
+    "checkpoint": {
+      "oneOf": [
+        { "type": "object", "additionalProperties": false, "required": ["status", "revision", "baseRevision", "recordedOn"], "properties": { "status": { "const": "not_recorded" }, "revision": { "type": "null" }, "baseRevision": { "type": "null" }, "recordedOn": { "type": "null" } } },
+        { "type": "object", "additionalProperties": false, "required": ["status", "revision", "baseRevision", "recordedOn"], "properties": { "status": { "const": "recorded" }, "revision": { "$ref": "#/$defs/revision" }, "baseRevision": { "$ref": "#/$defs/revision" }, "recordedOn": { "$ref": "#/$defs/date" } } }
+      ]
+    },
+    "verification": {
+      "oneOf": [
+        { "type": "object", "additionalProperties": false, "required": ["status", "revision", "specSha256", "completedOn", "evidenceFile"], "properties": { "status": { "const": "not_started" }, "revision": { "type": "null" }, "specSha256": { "type": "null" }, "completedOn": { "type": "null" }, "evidenceFile": { "type": "null" } } },
+        { "type": "object", "additionalProperties": false, "required": ["status", "revision", "specSha256", "completedOn", "evidenceFile"], "properties": { "status": { "enum": ["failed", "passed"] }, "revision": { "$ref": "#/$defs/revision" }, "specSha256": { "$ref": "#/$defs/hash" }, "completedOn": { "$ref": "#/$defs/date" }, "evidenceFile": { "const": "IMPLEMENTATION.md" } } }
+      ]
+    },
+    "review": {
+      "oneOf": [
+        { "type": "object", "additionalProperties": false, "required": ["status", "revision", "specSha256", "findingsSha256", "reviewedOn", "reviewerActorRef", "evidenceFile"], "properties": { "status": { "const": "not_started" }, "revision": { "type": "null" }, "specSha256": { "type": "null" }, "findingsSha256": { "type": "null" }, "reviewedOn": { "type": "null" }, "reviewerActorRef": { "type": "null" }, "evidenceFile": { "type": "null" } } },
+        { "type": "object", "additionalProperties": false, "required": ["status", "revision", "specSha256", "findingsSha256", "reviewedOn", "reviewerActorRef", "evidenceFile"], "properties": { "status": { "enum": ["changes_requested", "passed"] }, "revision": { "$ref": "#/$defs/revision" }, "specSha256": { "$ref": "#/$defs/hash" }, "findingsSha256": { "$ref": "#/$defs/hash" }, "reviewedOn": { "$ref": "#/$defs/date" }, "reviewerActorRef": { "type": "string", "minLength": 3, "maxLength": 120 }, "evidenceFile": { "const": "REVIEW.md" } } }
+      ]
+    },
+    "recovery": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "reasonCode", "priorCandidateRevision", "priorFinalRevision", "priorBaseRevision", "observedBaseRevision", "priorClosedOn", "preparedOn"],
+      "properties": {
+        "status": { "const": "untrusted_until_change_validation" }, "reasonCode": { "const": "base_advanced" }, "priorCandidateRevision": { "$ref": "#/$defs/revision" }, "priorFinalRevision": { "$ref": "#/$defs/revision" }, "priorBaseRevision": { "$ref": "#/$defs/revision" }, "observedBaseRevision": { "$ref": "#/$defs/revision" }, "priorClosedOn": { "$ref": "#/$defs/date" }, "preparedOn": { "$ref": "#/$defs/date" }
+      }
+    },
+    "closure": {
+      "type": "object", "additionalProperties": false,
+      "required": ["outcome", "reason", "closedOn", "finalRevision", "supersedes", "supersededBy"],
+      "properties": {
+        "outcome": { "enum": ["completed", "cancelled", "superseded"] }, "reason": { "type": "string", "minLength": 1, "maxLength": 500 }, "closedOn": { "$ref": "#/$defs/date" }, "finalRevision": { "$ref": "#/$defs/revision" }, "supersedes": { "type": "array", "maxItems": 100, "uniqueItems": true, "items": { "$ref": "#/$defs/id" } }, "supersededBy": { "anyOf": [{ "$ref": "#/$defs/id" }, { "type": "null" }] }
+      },
+      "allOf": [
+        { "if": { "properties": { "outcome": { "const": "cancelled" } }, "required": ["outcome"] }, "then": { "properties": { "supersedes": { "maxItems": 0 }, "supersededBy": { "type": "null" } } } },
+        { "if": { "properties": { "outcome": { "const": "superseded" } }, "required": ["outcome"] }, "then": { "properties": { "supersedes": { "maxItems": 0 }, "supersededBy": { "$ref": "#/$defs/id" } } } },
+        { "if": { "properties": { "outcome": { "const": "completed" } }, "required": ["outcome"] }, "then": { "properties": { "supersededBy": { "type": "null" } } } }
+      ]
+    }
+  }
+}

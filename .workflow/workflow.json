@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "workflowVersion": "1.0.0",
+  "name": "Agent Workflow",
+  "projectId": "project",
+  "canonicalRoot": ".workflow",
+  "activeTaskLimit": 1,
+  "cutover": {
+    "mode": "native"
+  },
+  "overview": {
+    "outputPath": "project-overview.md",
+    "outputSha256": "43719a08b03257626110a508343d2829cf1b0047e83181d2843785c096cb2efa",
+    "refreshedOn": "2026-08-28",
+    "inputs": [
+      {
+        "path": "project-plan.md",
+        "sha256": "eb8cb34aff8f50c2807cb91345bdd36887783a6594af42cb64572f27e2bcb1f1"
+      },
+      {
+        "path": "build-plan.md",
+        "sha256": "85a05081fe9d77dcb251751465a52fe8192e3795a38177a395e43f0b94658404"
+      },
+      {
+        "path": "README.md",
+        "sha256": "9df30a984b5aa9fcb38dd2c75fc3f241fd61fe10b4f875bee246bc38bc083d0d"
+      }
+    ]
+  },
+  "buildPlan": {
+    "baselineCompletedIds": []
+  },
+  "derivation": {
+    "mode": "original",
+    "provenancePath": "DESIGN_PROVENANCE.md",
+    "noticePath": null,
+    "sourceMapPath": null
+  }
+}

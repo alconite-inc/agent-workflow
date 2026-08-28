@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "name": "agent-workflow-implement",
+  "workflowVersion": "1.0.0",
+  "mode": "code_write",
+  "requiresActiveTask": "required",
+  "allowedWrites": ["<approved-task-scope>", ".workflow/active/<task-id>/IMPLEMENTATION.md", ".workflow/active/<task-id>/findings.json", ".workflow/active/<task-id>/task.json"],
+  "commandClasses": ["read_repository", "read_git_state", "workflow_validate", "workflow_state_edit", "scoped_code_edit", "focused_verify", "full_verify"],
+  "stopConditions": ["checkpoint_authorization_required", "external_authority_required", "no_active_task", "proof_base_advanced", "spec_digest_mismatch", "spec_not_approved", "unexpected_dirty_path"]
+}

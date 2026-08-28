@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "name": "agent-workflow-refresh-overview",
+  "workflowVersion": "1.0.0",
+  "mode": "state_write",
+  "requiresActiveTask": "optional",
+  "allowedWrites": [".workflow/project-overview.md", ".workflow/workflow.json#overview"],
+  "commandClasses": ["read_repository", "workflow_validate", "workflow_state_edit"],
+  "stopConditions": ["checkpoint_already_recorded", "unapproved_overview_scope", "zero_active_write"]
+}

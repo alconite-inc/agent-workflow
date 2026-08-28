@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "name": "agent-workflow-specify",
+  "workflowVersion": "1.0.0",
+  "mode": "state_write",
+  "requiresActiveTask": "required",
+  "allowedWrites": [".workflow/active/<task-id>/SPEC.md", ".workflow/active/<task-id>/task.json"],
+  "commandClasses": ["read_repository", "workflow_validate", "workflow_state_edit"],
+  "stopConditions": ["human_spec_review_required", "no_active_task", "pending_spec_mutated", "wrong_stage"]
+}

@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "name": "agent-workflow-discover",
+  "workflowVersion": "1.0.0",
+  "mode": "state_write",
+  "requiresActiveTask": "required",
+  "allowedWrites": [".workflow/active/<task-id>/DISCOVERY.md", ".workflow/active/<task-id>/task.json"],
+  "commandClasses": ["read_repository", "workflow_validate", "workflow_state_edit"],
+  "stopConditions": ["no_active_task", "untrusted_instruction", "wrong_stage"]
+}
