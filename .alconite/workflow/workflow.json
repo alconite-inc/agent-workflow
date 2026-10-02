@@ -1,0 +1,34 @@
+{
+  "limits": {
+    "activeTasks": 1,
+    "bytes": 65536,
+    "completions": 20,
+    "files": 7,
+    "lines": 1200
+  },
+  "profile": "alconite-workflow-v3",
+  "projectId": "agent-workflow",
+  "schemaVersion": 3,
+  "skillLimits": {
+    "bytes": 131072,
+    "fileBytes": 16384,
+    "fileLines": 250,
+    "files": 18,
+    "lines": 2500
+  },
+  "technologies": [
+    "astro",
+    "axum",
+    "helidon-mp",
+    "helidon-se",
+    "java",
+    "javafx",
+    "kafka",
+    "nextjs",
+    "qwik",
+    "react",
+    "rust",
+    "spring-boot",
+    "typescript"
+  ]
+}
